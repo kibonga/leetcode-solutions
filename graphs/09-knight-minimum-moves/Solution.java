@@ -1,33 +1,48 @@
 class Solution {
-    public int minKnightMoves(int x, int y) {
-        x = Math.abs(x);
-        y = Math.abs(y);
+    private record Coords(int row, int col) {}
 
-        int[] dRow = {-2, -2, -1, -1, 1, 1, 2, 2};
-        int[] dCol = {-1, 1, -2, 2, -2, 2, -1, 1};
+    public int getKnightShortestPath(int x, int y) {
+        int targetX = Math.abs(x);
+        int targetY = Math.abs(y);
 
-        Queue<int[]> queue = new ArrayDeque<>();
-        queue.add(new int[]{0, 0});
-        Set<String> visited = new HashSet<>();
-        visited.add("0,0");
+        Queue<Coords> queue = new ArrayDeque<>();
+        HashSet<Coords> visited = new HashSet<>();
+        var start = new Coords(0, 0);
+        queue.add(start);
+        visited.add(start);
 
-        int steps = 0;
+        int movesCount = 0;
         while (!queue.isEmpty()) {
             int levelSize = queue.size();
             for (int i = 0; i < levelSize; i++) {
-                int[] cur = queue.poll();
-                if (cur[0] == x && cur[1] == y) return steps;
-
-                for (int d = 0; d < 8; d++) {
-                    int nr = cur[0] + dRow[d], nc = cur[1] + dCol[d];
-                    // bound: allow a small "overshoot" (-2) so BFS doesn't miss short shortcuts near the origin
-                    if (nr < -2 || nc < -2 || nr > x + 2 || nc > y + 2) continue;
-                    String key = nr + "," + nc;
-                    if (visited.add(key)) queue.add(new int[]{nr, nc});
+                var node = queue.poll();
+                if (node.row() == targetX && node.col() == targetY) return movesCount;
+                for (var neighbor : getNextMoves(node, visited, targetX, targetY)) {
+                    queue.add(neighbor);
+                    visited.add(neighbor);
                 }
             }
-            steps++;
+            movesCount++;
         }
-        return -1; // theoretically unreachable in practice
+
+        return -1;
+    }
+
+    private List<Coords> getNextMoves(Coords node, HashSet<Coords> visited, int targetX, int targetY) {
+        int[] deltaRow = {-1, -2, -2, -1, 1, 2, 2, 1};
+        int[] deltaCol = {-2, -1, 1, 2, 2, 1, -1, -2};
+
+        List<Coords> nextMoves = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            int row = node.row() + deltaRow[i];
+            int col = node.col() + deltaCol[i];
+            var current = new Coords(row, col);
+
+            if (row >= -2 && row <= targetX + 2 && col >= -2 && col <= targetY + 2 && !visited.contains(current)) {
+                nextMoves.add(current);
+            }
+        }
+
+        return nextMoves;
     }
 }
